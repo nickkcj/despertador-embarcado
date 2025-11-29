@@ -1,0 +1,22 @@
+{
+  "name": "despertador-backend",
+  "version": "1.0.0",
+  "description": "Backend completo do Despertador Inteligente - Projeto Acadêmico",
+  "scripts": {
+    "start:controle": "cd services/controle && node index.js",
+    "start:logging": "cd services/logging && node index.js",
+    "start:gateway": "cd gateway && node index.js",
+    "install:all": "cd gateway && npm install && cd ../services/controle && npm install && cd ../logging && npm install",
+    "dev:controle": "cd services/controle && npm run dev",
+    "dev:logging": "cd services/logging && npm run dev",
+    "dev:gateway": "cd gateway && npm run dev"
+  },
+  "keywords": [
+    "despertador",
+    "esp32",
+    "iot",
+    "microservices"
+  ],
+  "author": "",
+  "license": "ISC"
+}
