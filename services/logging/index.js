@@ -22,7 +22,7 @@ app.use((req, res, next) => {
 });
 
 // Configuração do banco de dados
-const dbPath = path.resolve(__dirname, '../../../database/despertador.db');
+const dbPath = path.resolve(__dirname, '../../database/despertador.db');
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error('[Logging] Erro ao conectar ao banco de dados:', err.message);

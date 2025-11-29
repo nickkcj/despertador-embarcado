@@ -7,6 +7,8 @@ const path = require('path');
 const app = express();
 const PORT = 3001;
 
+const alarmStates = {};
+
 // Middlewares
 app.use(cors({
   origin: '*',
@@ -22,7 +24,7 @@ app.use((req, res, next) => {
 });
 
 // Configuração do banco de dados
-const dbPath = path.resolve(__dirname, '../../../database/despertador.db');
+const dbPath = path.resolve(__dirname, '../../database/despertador.db');
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error('[Controle] Erro ao conectar ao banco de dados:', err.message);
@@ -231,6 +233,52 @@ app.put('/api/config/:deviceId', (req, res) => {
   });
 });
 
+// GET /api/alarm/:deviceId/status - Verifica se deve parar o alarme
+app.get('/api/alarm/:deviceId/status', (req, res) => {
+  const { deviceId } = req.params;
+  const state = alarmStates[deviceId] || { ringing: false, stopRequested: false };
+
+  res.json({
+    success: true,
+    data: {
+      ringing: state.ringing,
+      stopRequested: state.stopRequested
+    }
+  });
+});
+
+// POST /api/alarm/:deviceId/trigger - Arduino avisa que alarme começou a tocar
+app.post('/api/alarm/:deviceId/trigger', (req, res) => {
+  const { deviceId } = req.params;
+  alarmStates[deviceId] = { ringing: true, stopRequested: false };
+
+  console.log(`[Controle] Alarme disparado para device: ${deviceId}`);
+  res.json({ success: true, message: 'Alarme registrado como tocando' });
+});
+
+// POST /api/alarm/:deviceId/stop - Usuário pede para parar o alarme
+app.post('/api/alarm/:deviceId/stop', (req, res) => {
+  const { deviceId } = req.params;
+
+  if (!alarmStates[deviceId]) {
+    alarmStates[deviceId] = { ringing: false, stopRequested: true };
+  } else {
+    alarmStates[deviceId].stopRequested = true;
+    alarmStates[deviceId].ringing = false;
+  }
+
+  console.log(`[Controle] Solicitação para parar alarme do device: ${deviceId}`);
+  res.json({ success: true, message: 'Alarme será parado' });
+});
+
+// POST /api/alarm/:deviceId/ack - Arduino confirma que parou
+app.post('/api/alarm/:deviceId/ack', (req, res) => {
+  const { deviceId } = req.params;
+  alarmStates[deviceId] = { ringing: false, stopRequested: false };
+
+  res.json({ success: true, message: 'Alarme confirmado como parado' });
+});
+
 // Rota padrão para endpoints não encontrados
 app.use('*', (req, res) => {
   res.status(404).json({
@@ -245,6 +293,10 @@ app.listen(PORT, () => {
   console.log(`[Controle] Endpoints disponíveis:`);
   console.log(`  - GET  /api/config/:deviceId`);
   console.log(`  - PUT  /api/config/:deviceId`);
+  console.log(`  - GET  /api/alarm/:deviceId/status`);
+  console.log(`  - POST /api/alarm/:deviceId/trigger`);
+  console.log(`  - POST /api/alarm/:deviceId/stop`);
+  console.log(`  - POST /api/alarm/:deviceId/ack`);
 });
 
 // Fechar conexão com banco ao encerrar
