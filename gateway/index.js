@@ -40,6 +40,19 @@ app.use('/api/config', createProxyMiddleware({
   }
 }));
 
+// Proxy para rotas de Alarme (porta 3001)
+app.use('/api/alarm', createProxyMiddleware({
+  target: 'http://localhost:3001',
+  changeOrigin: true,
+  onError: (err, req, res) => {
+    console.error('[Gateway] Erro ao conectar com Serviço de Controle:', err.message);
+    res.status(503).json({
+      success: false,
+      error: 'Serviço de Controle indisponível'
+    });
+  }
+}));
+
 // Proxy para o Serviço de Logging (porta 3002)
 // Rotas: POST /api/logs, GET /api/logs/:deviceId
 app.use('/api/logs', createProxyMiddleware({
