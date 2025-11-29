@@ -7,7 +7,7 @@
 
 const char* WIFI_SSID = "NICOLAS";
 const char* WIFI_PASSWORD = "20072004nicolas";
-const char* SERVER_URL = "http://192.168.15.6:3001";
+const char* SERVER_URL = "http://192.168.15.6:3000";
 const char* DEVICE_ID = "despertador01";
 
 const int pinBuzzer = D5;
@@ -177,6 +177,16 @@ void verificarAlarme() {
   }
 }
 
+void enviarLog(int light, bool triggered) {
+  HTTPClient http;
+  http.begin(wifiClient, String(SERVER_URL) + "/api/logs");
+  http.addHeader("Content-Type", "application/json");
+
+  String body = "{\"deviceId\":\"" + String(DEVICE_ID) + "\",\"light\":" + String(light) + ",\"alarmTriggered\":" + (triggered ? "true" : "false") + "}";
+  http.POST(body);
+  http.end();
+}
+
 void dispararAlarme() {
   alarmTriggered = true;
   alarmeTocando = true;
@@ -192,6 +202,10 @@ void dispararAlarme() {
 
   // Verifica luz
   int ldr = analogRead(pinLDR);
+
+  // Envia log
+  enviarLog(ldr, true);
+
   if (ldr > limiteEscuro) {
     ligarLED(255, 255, 255);
     ledLigadoPeloAlarme = true;
@@ -241,6 +255,10 @@ void pararAlarme() {
     desligarLED();
     ledLigadoPeloAlarme = false;
   }
+
+  // Envia log
+  int ldr = analogRead(pinLDR);
+  enviarLog(ldr, false);
 
   // Notifica servidor
   HTTPClient http;
